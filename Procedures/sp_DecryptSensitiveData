@@ -1,0 +1,25 @@
+CREATE PROCEDURE sp_DecryptSensitiveData
+    @CustomerID INT,
+    @Password NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @DecryptedSSN NVARCHAR(50);
+    DECLARE @DecryptedCreditCard NVARCHAR(50);
+
+    SELECT 
+        @DecryptedSSN = CONVERT(NVARCHAR(50), DECRYPTBYPASSPHRASE(@Password, SSN)),
+        @DecryptedCreditCard = CONVERT(NVARCHAR(50), DECRYPTBYPASSPHRASE(@Password, CreditCardNumber))
+    FROM Customers WHERE CustomerID = @CustomerID;
+
+    IF @DecryptedSSN IS NOT NULL AND @DecryptedCreditCard IS NOT NULL
+    BEGIN
+        PRINT 'Decryption Successful!';
+        SELECT @CustomerID AS CustomerID, @DecryptedSSN AS SSN, @DecryptedCreditCard AS CreditCardNumber;
+    END
+    ELSE
+    BEGIN
+        RAISERROR('Unauthorized access or incorrect password!', 16, 1);
+    END
+END;
